@@ -4,6 +4,7 @@ import express from "express";
 import sqlServer from "mssql";
 import { error } from "console";
 import jwt from "jsonwebtoken";
+import cors from "cors";
 
 const dbConfig = {
 server: "52.5.245.24",
@@ -27,8 +28,14 @@ const SEGREDO = 'REMOTA';
 const app = express();
 const porta = 3000;
 
+app.use(cors()); // Adicione isso
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
+
+
+app.get('/test-connection', (req, res) => {
+  res.status(200).json({ message: 'Conexão bem-sucedida!' });
+});
 
 app.listen(porta, () => {
     console.log("servidor rodando e escutando na porta 3000");
