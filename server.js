@@ -86,7 +86,7 @@ function verificarToken(req, res, next){
     });  
 
     //get servicos para o adm
-app.get("/admServicos/:id", (req, res) => {
+app.get("/admServicos/", (req, res) => {
   let id_servico = req.params.id;
   conexao.query(
       `SELECT * FROM servico`)
@@ -109,22 +109,16 @@ conexao.query(`exec SP_Ins_Servico
 .catch(err => res.json(err));
 });
 
-app.put("/servicos", (req, res) => {
-  
-  let id = req.body.id_servico;
-  let tit = req.body.titulo;
-  let desc = req.body.desc;
-  let url = req.body.url;
-  let img = req.body.img;
-  let ordem = req.body.ordem;
-  let ativo = req.body.ativo;
+app.put("/servicos/:id", (req, res) => {
+  let id = req.params.id;
+  let { titulo, desc, img, url, ordem, ativo } = req.body;
 
-conexao.query(`exec SP_Upd_Servico 
-${ativo}, '${tit}', '${desc}', '${url}', 
-'${img}', ${ordem}, ${ativo}`)      
-  .then(result => res.json(result.recordset))
-  .catch(err => res.json(err));
+  conexao.query(`exec SP_Upd_Servico 
+    ${id}, '${titulo}', '${desc}', '${img}', '${url}', ${ordem}, ${ativo}`)      
+    .then(result => res.json(result.recordset))
+    .catch(err => res.json(err));
 });
+
 
 
 app.delete("/servicos/:id", (req, res) => {
