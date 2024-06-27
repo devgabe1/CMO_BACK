@@ -4,6 +4,7 @@ import express from "express";
 import sqlServer from "mssql";
 import { error } from "console";
 import jwt from "jsonwebtoken";
+import cors from "cors";
 
 const dbConfig = {
 server: "52.5.245.24",
@@ -27,8 +28,14 @@ const SEGREDO = 'REMOTA';
 const app = express();
 const porta = 3000;
 
+app.use(cors()); // Adicione isso
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
+
+
+app.get('/test-connection', (req, res) => {
+  res.status(200).json({ message: 'Conexão bem-sucedida!' });
+});
 
 app.listen(porta, () => {
     console.log("servidor rodando e escutando na porta 3000");
@@ -80,7 +87,7 @@ function verificarToken(req, res, next){
     });  
 
     //get servicos para o adm
-app.get("/admServicos/:id", (req, res) => {
+app.get("/admServicos/", (req, res) => {
   let id_servico = req.params.id;
 
   conexao.query(
@@ -104,21 +111,14 @@ conexao.query(`exec SP_Ins_Servico
 .catch(err => res.json(err));
 });
 
-app.put("/servicos", (req, res) => {
-  
-  let id = req.body.id_servico;
-  let tit = req.body.titulo;
-  let desc = req.body.desc;
-  let url = req.body.url;
-  let img = req.body.img;
-  let ordem = req.body.ordem;
-  let ativo = req.body.ativo;
+app.put("/servicos/:id", (req, res) => {
+  let id = req.params.id;
+  let { titulo, desc, img, url, ordem, ativo } = req.body;
 
-conexao.query(`exec SP_Upd_Servico 
-${ativo}, '${tit}', '${desc}', '${url}', 
-'${img}', ${ordem}, ${ativo}`)      
-  .then(result => res.json(result.recordset))
-  .catch(err => res.json(err));
+  conexao.query(`exec SP_Upd_Servico 
+    ${id}, '${titulo}', '${desc}', '${img}', '${url}', ${ordem}, ${ativo}`)      
+    .then(result => res.json(result.recordset))
+    .catch(err => res.json(err));
 });
 
 
