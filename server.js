@@ -129,7 +129,6 @@ ${id}`)
 
     // get marcas para o site
   app.get("/marcas", (req, res) => {
-
     conexao.query(
         `SELECT * FROM marca where ativo = 1`)
         .then(result => res.json(result.recordset))
@@ -146,7 +145,6 @@ ${id}`)
   });
 
   app.post("/marcas", (req, res) => {
-  let ativo = '1';
   let {desc, logo, url} = req.body;
   
   conexao.query(`exec SP_Ins_Marca 
@@ -187,8 +185,7 @@ ${id}`)
 });  
   
       //get tipoProduto para o adm
-  app.get("/admtipoProduto/:id", (req, res) => {
-    let id_servico = req.params.id;
+  app.get("/admTipoProduto", (req, res) => {
 
   conexao.query(
     `SELECT * FROM tipoProduto`)
@@ -205,11 +202,12 @@ ${id}`)
     .catch(err => res.json(err));
 });
 
-  app.put("/tipoProduto", (req, res) => {
-  let {id, desc, oper} = req.body;
+  app.put("/tipoProduto/:id", (req, res) => {
+  let id = req.params.id;
+  let {desc, ativo} = req.body;
   
   conexao.query(`exec SP_Upd_TipoProduto
-  ${id}, '${desc}', '${oper}'`)
+  ${id}, '${desc}', ${ativo}`)
   .then(result => res.json(result.recordset))
   .catch(err => res.json(err));
 });
