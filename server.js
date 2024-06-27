@@ -4,7 +4,6 @@ import express from "express";
 import sqlServer from "mssql";
 import { error } from "console";
 import jwt from "jsonwebtoken";
-import cors from "cors";
 
 const dbConfig = {
 server: "52.5.245.24",
@@ -28,14 +27,8 @@ const SEGREDO = 'REMOTA';
 const app = express();
 const porta = 3000;
 
-app.use(cors()); // Adicione isso
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-
-app.get('/test-connection', (req, res) => {
-  res.status(200).json({ message: 'Conexão bem-sucedida!' });
-});
+app.use(bodyParser.urlencoded({extended: true}));
 
 app.listen(porta, () => {
     console.log("servidor rodando e escutando na porta 3000");
@@ -79,6 +72,7 @@ function verificarToken(req, res, next){
 
   //get servicos para o site
   app.get("/servicos", (req, res) => {
+
     conexao.query(
         `SELECT * FROM servico where ativo = 1 ORDER BY ORDEM_APRESENTACAO`)
         .then(result => res.json(result.recordset))
@@ -86,8 +80,9 @@ function verificarToken(req, res, next){
     });  
 
     //get servicos para o adm
-app.get("/admServicos/", (req, res) => {
+app.get("/admServicos/:id", (req, res) => {
   let id_servico = req.params.id;
+
   conexao.query(
       `SELECT * FROM servico`)
       .then(result => res.json(result.recordset))
@@ -109,21 +104,27 @@ conexao.query(`exec SP_Ins_Servico
 .catch(err => res.json(err));
 });
 
-app.put("/servicos/:id", (req, res) => {
-  let id = req.params.id;
-  let { titulo, desc, img, url, ordem, ativo } = req.body;
+app.put("/servicos", (req, res) => {
+  
+  let id = req.body.id_servico;
+  let tit = req.body.titulo;
+  let desc = req.body.desc;
+  let url = req.body.url;
+  let img = req.body.img;
+  let ordem = req.body.ordem;
+  let ativo = req.body.ativo;
 
-  conexao.query(`exec SP_Upd_Servico 
-    ${id}, '${titulo}', '${desc}', '${img}', '${url}', ${ordem}, ${ativo}`)      
-    .then(result => res.json(result.recordset))
-    .catch(err => res.json(err));
+conexao.query(`exec SP_Upd_Servico 
+${ativo}, '${tit}', '${desc}', '${url}', 
+'${img}', ${ordem}, ${ativo}`)      
+  .then(result => res.json(result.recordset))
+  .catch(err => res.json(err));
 });
 
 
-
 app.delete("/servicos/:id", (req, res) => {
-  
   let id = req.params.id
+
 conexao.query(`exec SP_Del_Servico 
 ${id}`) 
       .then(result => res.json(result.recordset))
@@ -132,17 +133,19 @@ ${id}`)
 
     // get marcas para o site
   app.get("/marcas", (req, res) => {
+
     conexao.query(
-        `SELECT * FROM marca where ativo = 1 ORDER BY ORDEM_APRESENTACAO`)
+        `SELECT * FROM marca where ativo = 1`)
         .then(result => res.json(result.recordset))
         .catch(err => res.json(err));
     });  
 
       //get marcas para o adm
-app.get("/admMarcas/:id", (req, res) => {
+  app.get("/admMarcas/:id", (req, res) => {
   let id_servico = req.params.id;
+
   conexao.query(
-      `SELECT * FROM marca`)
+      `SELECT * FROM marca where id_marca = ${id_servico}`)
       .then(result => res.json(result.recordset))
       .catch(err => res.json(err));
   });
@@ -160,8 +163,8 @@ app.get("/admMarcas/:id", (req, res) => {
   app.put("/marcas", (req, res) => {
   let { id, desc, logo, url, atv } = req.body;
   
-  conexao.query(`exec SP_Upd_Marcas
-  ${id}, ${desc}', '${logo}', 
+  conexao.query(`exec SP_Upd_Marca
+  ${id}, '${desc}', '${logo}', 
   '${url}', ${atv}`)
   .then(result => res.json(result.recordset))
   .catch(err => res.json(err));
@@ -170,201 +173,95 @@ app.get("/admMarcas/:id", (req, res) => {
 
   app.delete("/marcas/:id", (req, res) => {
     let id = req.params.id
-  conexao.query(`exec SP_Del_Marcas 
+
+  conexao.query(`exec SP_Del_Marca 
   ${id}`)
   .then(result => res.json(result.recordset))
   .catch(err => res.json(err));
 });
 
-  //get modelos para o site
-app.get("/modelos", (req, res) => {
-    conexao.query(
-        `SELECT * FROM modelos where ativo = 1 ORDER BY ORDEM_APRESENTACAO`)
-        .then(result => res.json(result.recordset))
-        .catch(err => res.json(err));
-    });  
-
-    //get modelos para o adm
-app.get("/admModelos/:id", (req, res) => {
-  let id_servico = req.params.id;
-  conexao.query(
-      `SELECT * FROM servico`)
-      .then(result => res.json(result.recordset))
-      .catch(err => res.json(err));
-  });
-
-  app.post("/modelos", (req, res) =>{
-    let { desc } = req.body;
-
-    conexao.query(
-      `CALL sp_ins_modelo ( ? )`, [ desc ], (erro, linhas) =>{
-        if (erro){
-          console.error("Erro ao inserir modelo", erro)
-          res.status(500).send("Erro ao inserir modelo");
-        } else{
-          console.log("Modelo inserida com sucesso");
-          res.status(200).json(linhas);
-        }
-      });
-  });
-
-  app.put("/modelos", (req, res) =>{
-    let { id, desc } = req.body;
-
-    conexao.query(
-      `CALL sp_ed_modelo(?, ?, 'U')`, [id, desc], (erro, linhas)=>{
-        if (erro){
-          console.error("Erro ao atualizar modelos", erro);
-          res.status(500).send("Erro ao atualizar modelos.");
-        } else{
-          console.log("Modelos atualizada com sucesso.");
-          res.status(200).json(linhas);
-        }
-      }
-    )
-  });
-
-  app.delete("/modelos", (req, res) =>{
-    let id = req.body.id;
-    conexao.query(
-    `CALL sp_ed_modelo (?, NULL, 'D')`, [id], (erro, linhas)=>{
-      if (erro){
-        console.error("Erro ao desativar modelo", erro);
-        res.status(500).send("Erro ao desativar modelo.");
-      } else{
-        console.log("Modelo desativado com sucesso", linhas);
-        res.status(200).json(linhas);
-      }
-    }
-  )
-  });
-
-  //get produtos para o site
-app.get("/produtos", (req, res) => {
-    conexao.query(
-        `SELECT * FROM produtos where ativo = 1 ORDER BY ORDEM_APRESENTACAO`)
-        .then(result => res.json(result.recordset))
-        .catch(err => res.json(err));
-    });  
-
-    //get produtos para o adm
-app.get("/admProdutos/:id", (req, res) => {
-  let id_servico = req.params.id;
-  conexao.query(
-      `SELECT * FROM produtos`)
-      .then(result => res.json(result.recordset))
-      .catch(err => res.json(err));
-  });
-
-  app.post("/produtos", (req, res) =>{
-    let { desc, id_cliente, id_tipo, id_marca, id_modelo, numero_serie, capacidade_produto, problema_produto, data_cadastro} = req.body;
-
-    conexao.query(
-      `CALL sp_ins_produto ( ?, ?, ?, ?, ?, ?, ?, ?, ? )`, [ desc, id_cliente, id_tipo, id_marca, id_modelo, numero_serie, capacidade_produto, problema_produto, data_cadastro], (erro, linhas) =>{
-        if (erro){
-          console.error("Erro ao inserir produto", erro)
-          res.status(500).send("Erro ao inserir produto");
-        } else{
-          console.log("Produto inserida com sucesso");
-          res.status(200).json(linhas);
-        }
-      });
-  }); 
-
-  app.put("/produtos", (req, res) =>{
-    let { id, desc, id_cliente, id_tipo, id_marca, id_modelo, numero_serie, capacidade_produto, problema_produto, data_cadastro, atv} = req.body;
-
-
-    conexao.query(
-      `CALL sp_ed_produto(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'U' )`, [ id, desc, id_cliente, id_tipo, id_marca, id_modelo, numero_serie, capacidade_produto, problema_produto, data_cadastro, atv], (erro, linhas) =>{
-        if (erro){
-          console.error("Erro ao atualizar produto", erro);
-          res.status(500).send("Erro ao atualizar produto.");
-        } else{
-          console.log("Produto atualizada com sucesso.");
-          res.status(200).json(linhas);
-        }
-      }
-    )
-  });
-  
-  app.delete("/produtos", (req, res) =>{
-    let { id } = req.body;
-
-    conexao.query(
-      `CALL sp_ed_produto(?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'D' )`, [ id ], (erro, linhas) =>{
-        if (erro){
-          console.error("Erro ao desativar produto", erro);
-          res.status(500).send("Erro ao desativar produto.");
-        } else{
-          console.log("Produto desativado com sucesso.");
-          res.status(200).json(linhas);
-        }
-      }
-    )
-  });
-
-    //get servicos para o site
+    //get tipoProduto para o site
   app.get("/tipoProduto", (req, res) => {
-      conexao.query(
-          `SELECT * FROM tipoProduto where ativo = 1 ORDER BY ORDEM_APRESENTACAO`)
-          .then(result => res.json(result.recordset))
-          .catch(err => res.json(err));
-      });  
+
+  conexao.query(
+    `SELECT * FROM tipoProduto where ativo = 1`)
+    .then(result => res.json(result.recordset))
+    .catch(err => res.json(err));
+});  
   
-      //get para o adm
+      //get tipoProduto para o adm
   app.get("/admtipoProduto/:id", (req, res) => {
     let id_servico = req.params.id;
-    conexao.query(
-        `SELECT * FROM tipoProduto`)
-        .then(result => res.json(result.recordset))
-        .catch(err => res.json(err));
-    });
-    
-  app.post("/tipoProduto", (req, res) =>{
-    let { desc} = req.body;
 
-    conexao.query(
-      `CALL sp_ins_tipoproduto ( ? )`, [ desc], (erro, linhas) =>{
-        if (erro){
-          console.error("Erro ao inserir tipo de produto", erro)
-          res.status(500).send("Erro ao inserir tipo de produto");
-        } else{
-          console.log("Tipo de produto inserido com sucesso");
-          res.status(200).json(linhas);
-        }
-      });
-  });
+  conexao.query(
+    `SELECT * FROM tipoProduto`)
+    .then(result => res.json(result.recordset))
+    .catch(err => res.json(err));
+});
   
-  app.put("/tipoProduto", (req, res) =>{
-    let { id, desc, oper} = req.body;
+  app.post("/tipoProduto", (req, res) => {
+  let {desc} = req.body;
+  
+  conexao.query(`exec SP_Ins_TipoProduto 
+  '${desc}'`)
+    .then(result => res.json(result.recordset))
+    .catch(err => res.json(err));
+});
 
-    conexao.query(
-      `CALL sp_ed_tipoproduto ( ?, ?, 'U' )`, [ id, desc, oper ], (erro, linhas) =>{
-        if (erro){
-          console.error("Erro ao editar tipo de produto", erro)
-          res.status(500).send("Erro ao editar tipo de produto");
-        } else{
-          console.log("Tipo de produto editado com sucesso");
-          res.status(200).json(linhas);
-        }
-      });
-  }); 
+  app.put("/tipoProduto", (req, res) => {
+  let {id, desc, oper} = req.body;
+  
+  conexao.query(`exec SP_Upd_TipoProduto
+  ${id}, '${desc}', '${oper}'`)
+  .then(result => res.json(result.recordset))
+  .catch(err => res.json(err));
+});
 
-  app.delete("/tipoProduto", (req, res) =>{
-    let { id } = req.body;
+  app.delete("/tipoProduto/:id", (req, res) => {
+    let id = req.params.id
+    let atv = req.body.atv
 
-    conexao.query(
-      `CALL sp_ed_tipoproduto ( ?, NULL, 'D' )`, [ id ], (erro, linhas) =>{
-        if (erro){
-          console.error("Erro ao desativar tipo de produto", erro)
-          res.status(500).send("Erro ao desativar tipo de produto");
-        } else{
-          console.log("Tipo de produto desativado com sucesso");
-          res.status(200).json(linhas);
-        }
-      });
-  }); 
+  conexao.query(`exec SP_Del_TipoProduto 
+  ${id}, ${atv}`)
+  .then(result => res.json(result.recordset))
+  .catch(err => res.json(err));
+});
 
+    // get chamado para o site
+  app.get("/chamados", (req, res) => {
 
+  conexao.query(
+    `SELECT * FROM chamado`)
+    .then(result => res.json(result.recordset))
+    .catch(err => res.json(err));
+});  
+
+  app.post("/chamados", (req, res) => {
+    let {cliente, fone, email, tipoProd, produto, marca, problema, tipoCham} = req.body;
+  
+  conexao.query(`exec SP_Ins_Chamado
+  '${cliente}', '${fone}', '${email}', '${tipoProd}', '${produto}',
+  '${marca}', '${problema}', '${tipoCham}'`)
+    .then(result => res.json(result.recordset))
+    .catch(err => res.json(err));
+});
+
+    // get filiais para o site
+  app.get("/filial", (req, res) => {
+
+  conexao.query(
+    `SELECT * FROM filial where ativo = 1`)
+      .then(result => res.json(result.recordset))
+      .catch(err => res.json(err));
+});  
+
+      // get contatos para o site
+  app.get("/contato", (req, res) => {
+
+  conexao.query(
+    `SELECT * FROM contato`)
+      .then(result => res.json(result.recordset))
+      .catch(err => res.json(err));
+});  
+        
 
