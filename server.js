@@ -78,17 +78,16 @@ function verificarToken(req, res, next){
   });
 
   //get servicos para o site
-  app.get("/servicos", (req, res) => {
+app.get("/servicos", (req, res) => {
 
     conexao.query(
         `SELECT * FROM servico where ativo = 1 ORDER BY ORDEM_APRESENTACAO`)
         .then(result => res.json(result.recordset))
         .catch(err => res.json(err));
-    });  
+  });  
 
-    //get servicos para o adm
-app.get("/admServicos/", (req, res) => {
-  let id_servico = req.params.id;
+//get servicos para o adm
+app.get("/admServicos", (req, res) => {
 
   conexao.query(
       `SELECT * FROM servico`)
@@ -97,12 +96,9 @@ app.get("/admServicos/", (req, res) => {
   });
       
 app.post("/servicos", (req, res) => {
-  let tit = req.body.titulo;
-  let desc = req.body.desc;
-  let url = req.body.url;
-  let img = req.body.img;
-  let ordem = req.body.ordem;
+ 
   let ativo = '1';
+  let { tit, desc, url, img, ordem } = req.body;
 
 conexao.query(`exec SP_Ins_Servico 
 '${tit}', '${desc}', '${url}', 
@@ -141,16 +137,16 @@ ${id}`)
     });  
 
       //get marcas para o adm
-  app.get("/admMarcas/:id", (req, res) => {
-  let id_servico = req.params.id;
+  app.get("/admMarcas", (req, res) => {
 
   conexao.query(
-      `SELECT * FROM marca where id_marca = ${id_servico}`)
+      `SELECT * FROM marca`)
       .then(result => res.json(result.recordset))
       .catch(err => res.json(err));
   });
 
   app.post("/marcas", (req, res) => {
+  let ativo = '1';
   let {desc, logo, url} = req.body;
   
   conexao.query(`exec SP_Ins_Marca 
@@ -160,8 +156,9 @@ ${id}`)
     .catch(err => res.json(err));
 });
   
-  app.put("/marcas", (req, res) => {
-  let { id, desc, logo, url, atv } = req.body;
+  app.put("/marcas/:id", (req, res) => {
+  let id = req.params.id;
+  let { desc, logo, url, atv } = req.body;
   
   conexao.query(`exec SP_Upd_Marca
   ${id}, '${desc}', '${logo}', 
