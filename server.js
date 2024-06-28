@@ -223,10 +223,10 @@ ${id}`)
 });
 
     // get chamado para o site
-  app.get("/chamados", (req, res) => {
+  app.get("/admChamados", (req, res) => {
 
   conexao.query(
-    `SELECT * FROM chamado`)
+    `SELECT * FROM VW_CHAMADO;`)
     .then(result => res.json(result.recordset))
     .catch(err => res.json(err));
 });  
