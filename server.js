@@ -241,6 +241,19 @@ app.post("/chamados", (req, res) => {
     .catch(err => res.json(err));
 });
 
+app.post("/contato", (req, res) => {
+  let { nome, email, assunto, telefone, mensagem } = req.body;
+  console.log("Dados recebidos:", { nome, email, assunto, telefone, mensagem });
+
+  // Executar a procedure para inserir o contato no banco de dados
+  conexao.query(`exec SP_Ins_Chamado
+    '${nome}', '${telefone}', '${email}', '', '', '${assunto}', '${mensagem}', 'Contato'`)
+    .then(result => res.json({ message: "Contato criado com sucesso" }))
+    .catch(err => {
+      console.error("Erro ao criar contato:", err);
+      res.status(500).json({ error: "Erro ao criar contato" });
+    });
+});
 
     // get filiais para o site
   app.get("/filial", (req, res) => {
@@ -252,12 +265,24 @@ app.post("/chamados", (req, res) => {
 });  
 
       // get contatos para o site
-  app.get("/contato", (req, res) => {
-
-  conexao.query(
-    `SELECT * FROM contato`)
-      .then(result => res.json(result.recordset))
-      .catch(err => res.json(err));
-});  
+      app.get("/admcontato", (req, res) => {
+        const query = `
+          SELECT 
+            contato.id_contato,
+            cliente.nome_cliente,
+            contato.assunto,
+            contato.mensagem,
+            contato.dt_contato,
+            contato.resposta,
+            contato.dt_resposta
+          FROM contato
+          JOIN cliente ON contato.id_cliente = cliente.id_cliente
+        `;
+      
+        conexao.query(query)
+          .then(result => res.json(result.recordset))
+          .catch(err => res.json(err));
+      });
+      
         
 
