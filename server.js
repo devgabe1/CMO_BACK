@@ -231,15 +231,16 @@ ${id}`)
     .catch(err => res.json(err));
 });  
 
-  app.post("/chamados", (req, res) => {
-    let {cliente, fone, email, tipoProd, produto, marca, problema, tipoCham} = req.body;
-  
+app.post("/chamados", (req, res) => {
+  let { cliente, fone, email, tipoProd, produto, marca, problema } = req.body;
+
   conexao.query(`exec SP_Ins_Chamado
-  '${cliente}', '${fone}', '${email}', '${tipoProd}', '${produto}',
-  '${marca}', '${problema}', '${tipoCham}'`)
+    '${cliente}', '${fone}', '${email}', '${tipoProd}', '${produto}', 
+    '${marca}', '${problema}', 'Chamado'`)
     .then(result => res.json(result.recordset))
     .catch(err => res.json(err));
 });
+
 
     // get filiais para o site
   app.get("/filial", (req, res) => {
