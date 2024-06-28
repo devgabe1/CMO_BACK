@@ -24,7 +24,7 @@ const conexao = sqlServer.connect(dbConfig, (err) => {
     console.log('Conectado com SQL Server');
 });
 
-const SEGREDO = 'REMOTA';
+
 const app = express();
 const porta = 3000;
 
@@ -47,6 +47,8 @@ app.get("/", (req, resp)=> {
 
 let html = '';
 
+
+const SEGREDO = 'REMOTA';
 // middleware
 function verificarToken(req, res, next){
     const token = req.headers['x-access-token'];
@@ -65,7 +67,7 @@ function verificarToken(req, res, next){
     // conectar ao bd pra buscar o ID desse usuario
   
     //if usu e a senha for igual ao registrado na tabela do BD
-    if(usu == "marcos" && sen == "123"){
+    if(usu == "admin" && sen == "admin"){
       const id = 1; // isso vem do BD
   
       //token tem 3 partes = 1.) identifica o usuário 2.) segredo, opções 
